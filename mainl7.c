@@ -32,18 +32,30 @@
 #include <stdint.h>
 #include <pic16f887.h>
 
+// Constantes
+#define _tmr0_value 61
+
 void setup(void){
     ANSEL = 0;
     ANSELH = 0;                 // I/O digitales
     
-    OSCCONbits.IRCF = 0b0110;   // 4MHz
+    OSCCONbits.IRCF = 0b0101;   // 2MHz
     OSCCONbits.SCS = 1;         // Oscilador interno
+    
+    OPTION_REGbits.T0CS = 0;    // TMR0 con internal clock
+    OPTION_REGbits.PSA = 0;     // Prescaler a TMR0
+    OPTION_REGbits.PS = 0b0111; // PSA 256
+    
+    
     
     TRISA = 0;                  // PORTA como salida
     PORTA = 0;                  // Se limpia PORTA
     
     TRISB = 0b00000011;         // PORTB0 y PORTB1 como entradas
     PORTB = 0;                  // Se limpia PORTB
+    
+    TRISC = 0;                  // PORTA como salida
+    PORTC = 0;                  // Se limpia PORTA
     
     OPTION_REGbits.nRBPU = 0;   // Se habilitan los pullups
     WPUBbits.WPUB0 = 1;         // Se habilita el pullup en PORTB0
@@ -54,6 +66,8 @@ void setup(void){
     IOCBbits.IOCB0 = 1;         // Se habilita interrupción en PORTB0
     IOCBbits.IOCB1 = 1;         // Se habilita interrupción en PORTB1
     INTCONbits.RBIF = 0;        // Se limpia bandera de interrupción del PORTB
+    INTCONbits.T0IE = 0;        // Se habilita interrupción en TMR0
+    INTCONbits.T0IF = 0;        // Se limpia bandera de interrupción del TMR0
 }
 
 void __interrupt() isr (void)
@@ -66,6 +80,13 @@ void __interrupt() isr (void)
         else if (!RB1){
             PORTA--;
         INTCONbits.RBIF = 0; }
+    }
+    
+    if(INTCONbits.T0IF)
+    {
+        PORTC++;
+        INTCONbits.T0IF = 0;
+        TMR0 = _tmr0_value;
     }
     return;
     
