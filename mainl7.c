@@ -47,7 +47,7 @@ uint8_t i;
 // Funciones
 uint8_t udc(uint8_t a);         // Prototipo de función
 
-uint8_t udc(uint8_t a) {
+uint8_t udc(uint8_t a) {        // Función que brinda las centenas, decenas y unidades
     centenas = a/100;
     res = a%100;
     decenas = res/10;
@@ -77,7 +77,7 @@ void setup(void){
     TRISC = 0;                  // PORTC como salida
     PORTC = 0;                  // Se limpia PORTC
     
-    TRISD = 0b11111000;         // PORTD como salida
+    TRISD = 0b11111000;         // PORTD0, PORTD1 y PORTD2 como salida
     PORTD = 0;                  // Se limpia PORTD
     
     OPTION_REGbits.nRBPU = 0;   // Se habilitan los pullups
@@ -95,7 +95,7 @@ void setup(void){
 
 void __interrupt() isr (void)
 {
-    if(INTCONbits.RBIF)
+    if(INTCONbits.RBIF)         // Contador con interrupción de PORTB
     {
         if (!RB0){
             PORTA++;
@@ -105,23 +105,23 @@ void __interrupt() isr (void)
         INTCONbits.RBIF = 0; }
     }
     
-    if(INTCONbits.T0IF)
+    if(INTCONbits.T0IF)         // Mostrar contador en c/d/u con interrupción de TMR0
     {
         PORTD = 0;
         if (banderas == 0b00){
             PORTC = tabla[centenas];
             RD0 = 1;
-            banderas = 0b01;
+            banderas = 0b01;    // Cambia al siguiente display
         }
         else if (banderas == 0b01){
             PORTC = tabla[decenas];
             RD1 = 1;
-            banderas = 0b10;
+            banderas = 0b10;    // Cambia al siguiente display
         }
         else if (banderas == 0b10){
             PORTC = tabla[unidades];
             RD2 = 1;
-            banderas = 0b00;
+            banderas = 0b00;    // Cambia al siguiente display
         }
        INTCONbits.T0IF = 0;
        TMR0 = _tmr0_value;
@@ -132,8 +132,8 @@ void __interrupt() isr (void)
 
 void main(void) {
     setup();
-    while(1){
-       udc(PORTA);
+    while(1){                  // Loop
+       udc(PORTA);             // Se llama a la función
     }
     return ;
 }
