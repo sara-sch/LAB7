@@ -33,7 +33,27 @@
 #include <pic16f887.h>
 
 // Constantes
-#define _tmr0_value 61
+#define _tmr0_value 236
+
+// Variables
+uint8_t banderas;
+uint8_t centenas;
+uint8_t decenas;
+uint8_t unidades;
+uint8_t res;
+uint8_t tabla[10] = {63, 6, 91, 79, 102, 109, 125, 7, 127, 111};
+uint8_t i;
+
+// Funciones
+uint8_t udc(uint8_t a);         // Prototipo de función
+
+uint8_t udc(uint8_t a) {
+    centenas = a/100;
+    res = a%100;
+    decenas = res/10;
+    unidades = res%10;
+}
+
 
 void setup(void){
     ANSEL = 0;
@@ -54,8 +74,11 @@ void setup(void){
     TRISB = 0b00000011;         // PORTB0 y PORTB1 como entradas
     PORTB = 0;                  // Se limpia PORTB
     
-    TRISC = 0;                  // PORTA como salida
-    PORTC = 0;                  // Se limpia PORTA
+    TRISC = 0;                  // PORTC como salida
+    PORTC = 0;                  // Se limpia PORTC
+    
+    TRISD = 0b11111000;         // PORTD como salida
+    PORTD = 0;                  // Se limpia PORTD
     
     OPTION_REGbits.nRBPU = 0;   // Se habilitan los pullups
     WPUBbits.WPUB0 = 1;         // Se habilita el pullup en PORTB0
@@ -84,9 +107,24 @@ void __interrupt() isr (void)
     
     if(INTCONbits.T0IF)
     {
-        PORTC++;
-        INTCONbits.T0IF = 0;
-        TMR0 = _tmr0_value;
+        PORTD = 0;
+        if (banderas == 0b00){
+            PORTC = tabla[centenas];
+            RD0 = 1;
+            banderas = 0b01;
+        }
+        else if (banderas == 0b01){
+            PORTC = tabla[decenas];
+            RD1 = 1;
+            banderas = 0b10;
+        }
+        else if (banderas == 0b10){
+            PORTC = tabla[unidades];
+            RD2 = 1;
+            banderas = 0b00;
+        }
+       INTCONbits.T0IF = 0;
+       TMR0 = _tmr0_value;
     }
     return;
     
@@ -95,7 +133,11 @@ void __interrupt() isr (void)
 void main(void) {
     setup();
     while(1){
-        
+       udc(PORTA);
     }
     return ;
 }
+
+        
+        
+        
